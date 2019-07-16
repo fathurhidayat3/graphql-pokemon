@@ -10,43 +10,32 @@ const schema = buildSchema(`
   type Pokemon {
     id: Int
     name: String
+    height: Int
+    weight: Int
     abilities: [String]
     types: [String]
     image: String
+    species: String
     gender: String
   }
 
   type Query {
     getAllPokemon: [Pokemon]
-    getPokemonByName(name: String!): Pokemon
+    getPokemonByName(name: String): Pokemon
   }
 `);
 
 const root = {
   getAllPokemon: async () => {
     let temp = [];
-    let offset;
-    let limit = 200;
-    let url = `https://pokeapi.co/api/v2/pokemon?offset=${offset}&limit=${limit}`;
 
-    let getPokemonList = async function() {
-      try {
-        await axios.get(url).then(async res => {
-          await res.data.results.map(async pokemon =>
-            temp.push(await root.getPokemonByName(pokemon))
-          );
+    let url = `https://pokeapi.co/api/v2/pokemon?offset=0&limit=20`;
 
-          if (res.data.next) {
-            url = res.data.next;
-            await getPokemonList(url);
-          }
-        });
-      } catch (error) {
-        console.log(error);
-      }
-    };
-
-    await getPokemonList();
+    await axios.get(url).then(res => {
+      res.data.results.map(pokemon =>
+        temp.push(root.getPokemonByName(pokemon))
+      );
+    });
 
     return temp;
   },
@@ -57,7 +46,10 @@ const root = {
         let temp = {
           id: res.data.id,
           name: res.data.name,
+          height: res.data.height,
+          weight: res.data.weight,
           image: res.data.sprites.front_default,
+          species: res.data.species.name,
           abilities: res.data.abilities.map(
             abilityItem => abilityItem.ability.name
           ),
